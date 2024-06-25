@@ -8,6 +8,7 @@ interface Configuration extends WebpackConfiguration {
 }
 
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+// import {BundleAnalyzerPlugin} from 'webpack-bundle-analyzer';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
