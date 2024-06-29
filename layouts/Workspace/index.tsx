@@ -1,10 +1,23 @@
-import { Channels, Header, ProfileImg, RightMenu, Workspaces, WorkspaceWrapper } from "@layouts/Workspace/styles";
+import {
+  Channels,
+  Chats,
+  Header, MenuScroll,
+  ProfileImg,
+  RightMenu, WorkspaceName,
+  Workspaces,
+  WorkspaceWrapper
+} from "@layouts/Workspace/styles";
 import React, { FC, useCallback, useEffect } from "react";
 import useSWR, { mutate } from "swr";
 import gravatar from "gravatar";
 import axios from 'axios';
 import fetcher from "@utils/fetcher";
 import { Redirect } from "react-router";
+import { Route, Switch } from "react-router-dom";
+import loadable from "@loadable/component";
+
+const Channel = loadable(() => import('@pages/Channel'));
+const DirectMessage = loadable(() => import('@pages/DirectMessage'));
 
 interface IUser {
   id: number;
@@ -16,9 +29,14 @@ interface IUser {
 const Workspace : FC = ({children}) => {
   const { data, mutate, error } = useSWR('/api/users', fetcher, {
     dedupingInterval: 1000 * 600,
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
+    fallbackData: JSON.parse(localStorage.getItem('userData') || 'null'),
   });
+
+  useEffect(() => {
+    if (data) {
+      localStorage.setItem('userData', JSON.stringify(data));
+    }
+  }, [data]);
 
   // const { data, error, mutate } = useSWR('/api/users#123', fetcher, {    /// 요청은 같게 보내면서 동작을 다르게 하고 싶을 때
   //   dedupingInterval: 1000 * 60,
@@ -36,15 +54,13 @@ const Workspace : FC = ({children}) => {
       })
   }, [])
 
-  // return <div>로딩중...</div>;
+  // if (!data && !error) {
+  //   return <div>로딩중...</div>;
+  // }
 
-  if (!data) {
-    return <div>로딩중...</div>;
-  }
-
-  if (!data) {
-    return <Redirect to="/login" />;
-  }
+  // if (!data) {
+  //   return <Redirect to="/login" />;
+  // }
 
   return (
     <div>
@@ -59,7 +75,16 @@ const Workspace : FC = ({children}) => {
       <button onClick={onLogout}>로그아웃</button>
       <WorkspaceWrapper>
         <Workspaces>test</Workspaces>
-        <Channels>Channel</Channels>
+        <Channels>
+          <WorkspaceName>Sleact</WorkspaceName>
+          <MenuScroll>menu scroll </MenuScroll>
+        </Channels>
+        <Chats>
+          <Switch>
+            <Route path="/workspace/channel" component={Channel} />
+            <Route path="/workspace/dm" component={DirectMessage} />
+          </Switch>
+        </Chats>
       </WorkspaceWrapper>
       {children}
     </div>

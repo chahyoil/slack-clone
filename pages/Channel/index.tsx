@@ -1,8 +1,11 @@
 import React from 'react';
 import Workspace from "@layouts/Workspace";
+import { Container, Header } from "@pages/Channel/styles";
 
 const Channel = () => {
-  return <Workspace><div>로그인 하신것을 축하해요!</div></Workspace>
+  return <Container>
+    <Header> 채널 페이지</Header>
+  </Container>
 }
 
 export default Channel;

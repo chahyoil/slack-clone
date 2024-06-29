@@ -9,11 +9,7 @@ import useSWR from 'swr';
 const LogIn = () => {
   const { data, mutate, error } = useSWR('/api/users', fetcher, {
     dedupingInterval: 1000 * 600,
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
   });
-
-  console.log(data);
 
   const [logInError, setLogInError] = useState(false);
   const [email, onChangeEmail] = useInput('');
@@ -40,7 +36,8 @@ const LogIn = () => {
         )
         .then((res) => {
           const user = res.data;
-          mutate(res.data, false);
+          localStorage.setItem('userData', JSON.stringify(user));
+          mutate(user, false);
         })
         .catch((error) => {
           setLogInError(error.response?.status === 401);
