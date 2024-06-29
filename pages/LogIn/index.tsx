@@ -8,19 +8,12 @@ import useSWR from 'swr';
 
 const LogIn = () => {
   const { data, mutate, error } = useSWR('/api/users', fetcher, {
-    dedupingInterval: 1000 * 600,
+    dedupingInterval: 1000 * 60,
   });
 
   const [logInError, setLogInError] = useState(false);
   const [email, onChangeEmail] = useInput('');
   const [password, onChangePassword] = useInput('');
-  const history = useHistory();
-
-  useEffect(() => {
-    if (data && !error) {
-      localStorage.setItem('userData', JSON.stringify(data));
-    }
-  }, [data, error]);
 
   const onSubmit = useCallback(
     (e) => {
@@ -36,7 +29,6 @@ const LogIn = () => {
         )
         .then((res) => {
           const user = res.data;
-          localStorage.setItem('userData', JSON.stringify(user));
           mutate(user, false);
         })
         .catch((error) => {
@@ -46,11 +38,9 @@ const LogIn = () => {
     [email, password],
   );
 
-  useEffect(() => {
-    if (data) {
-      history.push('/workspace/channel'); // 리다이렉트를 한 번만 실행하도록 변경
-    }
-  }, [data, history]);
+  if (data) {
+    return <Redirect to="/workspace/sleact/channel/일반" />;
+  }
 
   // console.log(error, userData);
   // if (!error && userData) {
