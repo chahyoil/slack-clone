@@ -1,9 +1,10 @@
 import {
+  AddButton,
   Channels,
   Chats,
   Header, LogOutButton, MenuScroll,
   ProfileImg, ProfileModal,
-  RightMenu, WorkspaceName,
+  RightMenu, WorkspaceButton, WorkspaceName,
   Workspaces,
   WorkspaceWrapper
 } from "@layouts/Workspace/styles";
@@ -13,33 +14,30 @@ import gravatar from "gravatar";
 import axios from 'axios';
 import fetcher from "@utils/fetcher";
 import { Redirect } from "react-router";
-import { Route, Switch } from "react-router-dom";
+import { Link, Route, Switch } from "react-router-dom";
 import loadable from "@loadable/component";
 import Menu from '@components/Menu';
+import { IUser } from "@typings/db";
+import { Button, Input, Label } from "@pages/SignUp/styles";
+import useInput from "@hooks/useInput";
+import Modal from '@components/Modal';
+import { toast } from "react-toastify";
 
 const Channel = loadable(() => import('@pages/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage'));
 
-interface IUser {
-  id: number;
-  email: string;
-  nickname: string;
-  // 기타 필요한 사용자 정보 필드
-}
 
 const Workspace : FC = ({children}) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false);
+  const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
+  const [showCreateChannelModal, setShowCreateChannelModal] = useState(false);
+  const [newWorkspace, onChangeNewWorkspace, setNewWorkpsace] = useInput('');
+  const [newUrl, onChangeNewUrl, setNewUrl] = useInput('');
 
-  const { data, mutate, error } = useSWR('/api/users', fetcher, {
+  const { data, mutate, error } = useSWR<IUser | false>('/api/users', fetcher, {
     dedupingInterval: 1000 * 600,
-    fallbackData: JSON.parse(localStorage.getItem('userData') || 'null'),
   });
-
-  useEffect(() => {
-    if (data) {
-      localStorage.setItem('userData', JSON.stringify(data));
-    }
-  }, [data]);
 
   // const { data, error, mutate } = useSWR('/api/users#123', fetcher, {    /// 요청은 같게 보내면서 동작을 다르게 하고 싶을 때
   //   dedupingInterval: 1000 * 60,
@@ -58,17 +56,53 @@ const Workspace : FC = ({children}) => {
       });
   }, []);
 
-  const onClickUserProfile = useCallback(() => {
+  const onClickUserProfile = useCallback((e) => {
+    e.stopPropagation();
     setShowUserMenu((prev) => ! prev);
   }, [])
 
-  // if (!data && !error) {
-  //   return <div>로딩중...</div>;
-  // }
+  const onClickCreateWorkspace = useCallback(() => {
+    setShowCreateWorkspaceModal(true);
+  }, [])
 
-  // if (!data) {
-  //   return <Redirect to="/login" />;
-  // }
+  const onCreateWorkspace = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (!newWorkspace || !newWorkspace.trim()) return;
+      if (!newUrl || !newUrl.trim()) return;
+      axios
+        .post(
+          '/api/workspaces',
+          {
+            workspace: newWorkspace,
+            url: newUrl,
+          },
+          {
+            withCredentials: true,
+          },
+        )
+        .then(() => {
+          mutate();
+          setShowCreateWorkspaceModal(false);
+          setNewWorkpsace('');
+          setNewUrl('');
+        })
+        .catch((error) => {
+          console.dir(error);
+          toast.error(error.response?.data, { position: 'bottom-center' });
+        });
+    },
+    [newWorkspace, newUrl],
+  );
+
+  const onCloseModal = useCallback(() => {
+    setShowCreateWorkspaceModal(false);
+    setShowCreateChannelModal(false);
+  }, []);
+
+  if(!data) {
+    return <Redirect to="/login" />
+  }
 
   return (
     <div>
@@ -94,7 +128,18 @@ const Workspace : FC = ({children}) => {
         </RightMenu>
       </Header>
       <WorkspaceWrapper>
-        <Workspaces>test</Workspaces>
+
+        <Workspaces>
+          {data?.Workspaces?.map((ws) => {
+          return (
+            <Link key={ws.id} to={`/workspace/${ws.url}/channel/일반`}>
+              <WorkspaceButton>{ws.name.slice(0, 1).toUpperCase()}</WorkspaceButton>
+            </Link>
+          )
+        })}
+          <AddButton onClick={onClickCreateWorkspace}>+</AddButton>
+        </Workspaces>
+
         <Channels>
           <WorkspaceName>Sleact</WorkspaceName>
           <MenuScroll>menu scroll </MenuScroll>
@@ -106,7 +151,19 @@ const Workspace : FC = ({children}) => {
           </Switch>
         </Chats>
       </WorkspaceWrapper>
-      {children}
+      <Modal show={showCreateWorkspaceModal} onCloseModal={onCloseModal}>
+        <form onSubmit={onCreateWorkspace}>
+          <Label id="workspace-label">
+            <span>워크스페이스 이름</span>
+            <Input id="workspace" value={newWorkspace} onChange={onChangeNewWorkspace} />
+          </Label>
+          <Label id="workspace-url-label">
+            <span>워크스페이스 url</span>
+            <Input id="workspace" value={newUrl} onChange={onChangeNewUrl} />
+          </Label>
+          <Button type="submit">생성하기</Button>
+        </form>
+      </Modal>
     </div>
   )
 }
