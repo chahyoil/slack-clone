@@ -23,6 +23,8 @@ import useInput from "@hooks/useInput";
 import Modal from '@components/Modal';
 import { toast } from "react-toastify";
 import CreateChannelModal from "@components/CreateChannelModal";
+import InviteWorkspaceModal from "@components/InviteWorkspaceModal";
+import InviteChannelModal from "@components/InviteChannelModal";
 
 const Channel = loadable(() => import('@pages/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage'));
@@ -201,6 +203,16 @@ const Workspace : VFC = () => {
       </Modal>
       <CreateChannelModal show = {showCreateChannelModal} onCloseModal = {onCloseModal}
                           setShowCreateChannelModal = {setShowCreateChannelModal}></CreateChannelModal>
+      <InviteWorkspaceModal
+        show={showInviteWorkspaceModal}
+        onCloseModal={onCloseModal}
+        setShowInviteWorkspaceModal={setShowInviteWorkspaceModal}
+      />
+      <InviteChannelModal
+        show={showInviteChannelModal}
+        onCloseModal={onCloseModal}
+        setShowInviteChannelModal={setShowInviteChannelModal}
+      />
     </div>
   )
 }
