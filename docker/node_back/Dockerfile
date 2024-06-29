@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y wget && \
 # Copy package.json and package-lock.json
 COPY ./package*.json ./
 
-# Install dependencies
 RUN npm install
+RUN npm rebuild bcrypt --build-from-source
 
 # Copy the rest of the application code
 COPY . .
@@ -26,4 +26,4 @@ EXPOSE 3095
 ENV MYSQL_PASSWORD=${MYSQL_PASSWORD}
 
 # Start the application
-CMD ["dockerize", "-wait", "tcp://mysql_container:3306", "-timeout", "60s", "sh", "-c", "npx sequelize db:seed:all --debug && npm start"]
+CMD ["dockerize", "-wait", "tcp://mysql_container:3306", "-timeout", "60s", "sh", "-c", "npx sequelize db:seed:all --debug && npm run dev"]

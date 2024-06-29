@@ -22,7 +22,7 @@ services:
     environment:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - COOKIE_SECRET=${COOKIE_SECRET}
-      - NODE_ENV=production
+      - NODE_ENV=development
     ports:
       - "3095:3095"
     volumes:
