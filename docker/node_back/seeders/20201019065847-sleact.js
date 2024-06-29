@@ -2,42 +2,54 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    /**
-     * Add seed commands here.
-     *
-     * Example:
-     * await queryInterface.bulkInsert('People', [{
-     *   name: 'John Doe',
-     *   isBetaMember: false
-     * }], {});
-     */
-    await queryInterface.bulkInsert("workspaces", [
+    const workspace = await queryInterface.rawSelect(
+      'workspaces',
       {
-        id: 1,
-        name: "Sleact",
-        url: "sleact",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        where: {
+          id: 1,
+        },
       },
-    ]);
-    await queryInterface.bulkInsert("channels", [
+      ['id']
+    );
+
+    if (!workspace) {
+      await queryInterface.bulkInsert("workspaces", [
+        {
+          id: 1,
+          name: "Sleact",
+          url: "sleact",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]);
+    }
+
+    const channel = await queryInterface.rawSelect(
+      'channels',
       {
-        id: 1,
-        name: "일반",
-        private: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        WorkspaceId: 1,
+        where: {
+          id: 1,
+        },
       },
-    ]);
+      ['id']
+    );
+
+    if (!channel) {
+      await queryInterface.bulkInsert("channels", [
+        {
+          id: 1,
+          name: "일반",
+          private: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          WorkspaceId: 1,
+        },
+      ]);
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
-    /**
-     * Add commands to revert seed here.
-     *
-     * Example:
-     * await queryInterface.bulkDelete('People', null, {});
-     */
+    await queryInterface.bulkDelete('channels', { id: 1 }, {});
+    await queryInterface.bulkDelete('workspaces', { id: 1 }, {});
   },
 };

@@ -26,4 +26,4 @@ EXPOSE 3095
 ENV MYSQL_PASSWORD=${MYSQL_PASSWORD}
 
 # Start the application
-CMD ["dockerize", "-wait", "tcp://mysql_container:3306", "-timeout", "60s", "sh", "-c", "npx sequelize db:seed:all && npm start"]
+CMD ["dockerize", "-wait", "tcp://mysql_container:3306", "-timeout", "60s", "sh", "-c", "npx sequelize db:seed:all --debug && npm start"]
