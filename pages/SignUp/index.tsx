@@ -55,10 +55,6 @@ const SignUp = () => {
 
   }, [email, nickname, password, passwordCheck, mismatchError]);
 
-  if (data === undefined) {
-    return <div>로딩중...</div>;
-  }
-
   if(data) {
     return <Redirect to={"/workspace/channel"} />
   }

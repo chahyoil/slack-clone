@@ -2,18 +2,30 @@ import useInput from '@hooks/useInput';
 import { Success, Form, Error, Label, Input, LinkContainer, Button, Header } from '@pages/SignUp/styles';
 import fetcher from '@utils/fetcher';
 import axios from 'axios';
-import React, { useCallback, useState } from 'react';
-import { Link, Redirect } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from "react";
+import { Link, Redirect, useHistory } from 'react-router-dom';
 import useSWR from 'swr';
 
 const LogIn = () => {
-  const { data, error, mutate } = useSWR('/api/users', fetcher, {
-    dedupingInterval: 1000 * 60,
+  const { data, mutate, error } = useSWR('/api/users', fetcher, {
+    dedupingInterval: 1000 * 600,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
   });
+
+  console.log(data);
 
   const [logInError, setLogInError] = useState(false);
   const [email, onChangeEmail] = useInput('');
   const [password, onChangePassword] = useInput('');
+  const history = useHistory();
+
+  useEffect(() => {
+    if (data && !error) {
+      localStorage.setItem('userData', JSON.stringify(data));
+    }
+  }, [data, error]);
+
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
@@ -26,8 +38,9 @@ const LogIn = () => {
             withCredentials: true,
           },
         )
-        .then((response) => {
-          mutate();
+        .then((res) => {
+          const user = res.data;
+          mutate(res.data, false);
         })
         .catch((error) => {
           setLogInError(error.response?.status === 401);
@@ -36,13 +49,11 @@ const LogIn = () => {
     [email, password],
   );
 
-  if (data === undefined) {
-    return <div>로딩중...</div>;
-  }
-
-  if (data) {
-    return <Redirect to="/workspace/channel" />;
-  }
+  useEffect(() => {
+    if (data) {
+      history.push('/workspace/channel'); // 리다이렉트를 한 번만 실행하도록 변경
+    }
+  }, [data, history]);
 
   // console.log(error, userData);
   // if (!error && userData) {

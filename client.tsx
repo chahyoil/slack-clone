@@ -12,9 +12,9 @@ axios.defaults.baseURL =
   process.env.NODE_ENV === 'production' ? 'https://sleact.nodebird.com' : 'http://localhost:3090';
 
 render(
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>,
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>,
   document.querySelector('#app'),
 );
 
