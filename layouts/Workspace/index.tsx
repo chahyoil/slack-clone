@@ -13,11 +13,11 @@ import useSWR, { mutate } from "swr";
 import gravatar from "gravatar";
 import axios from 'axios';
 import fetcher from "@utils/fetcher";
-import { Redirect } from "react-router";
+import { Redirect, useParams } from "react-router";
 import { Link, Route, Switch } from "react-router-dom";
 import loadable from "@loadable/component";
 import Menu from '@components/Menu';
-import { IUser } from "@typings/db";
+import { IChannel, IUser } from "@typings/db";
 import { Button, Input, Label } from "@pages/SignUp/styles";
 import useInput from "@hooks/useInput";
 import Modal from '@components/Modal';
@@ -37,9 +37,16 @@ const Workspace : VFC = () => {
   const [newWorkspace, onChangeNewWorkspace, setNewWorkpsace] = useInput('');
   const [newUrl, onChangeNewUrl, setNewUrl] = useInput('');
 
-  const { data, mutate, error } = useSWR<IUser | false>('/api/users', fetcher, {
+  const { workspace, channel } = useParams<{ workspace: string; channel: string }>();
+  const { data : userData, mutate, error } = useSWR<IUser | false>('/api/users', fetcher, {
     dedupingInterval: 1000 * 600,
   });
+
+  const {data : channelData} = useSWR<IChannel[]>(
+    userData ? `/api/workspaces/${workspace}/channels` : null,
+    fetcher
+  );
+
 
   // const { data, error, mutate } = useSWR('/api/users#123', fetcher, {    /// 요청은 같게 보내면서 동작을 다르게 하고 싶을 때
   //   dedupingInterval: 1000 * 60,
@@ -115,7 +122,7 @@ const Workspace : VFC = () => {
     setShowInviteWorkspaceModal(true);
   }, []);
 
-  if(!data) {
+  if(!userData) {
     return <Redirect to="/login" />
   }
 
@@ -124,15 +131,15 @@ const Workspace : VFC = () => {
       <Header>
         <RightMenu>
           <span onClick={onClickUserProfile}>
-            <ProfileImg src={gravatar.url((data as any).email, {s : '28px' , d : 'retro'})}
-                        alt={(data as any).nickname}/>
+            <ProfileImg src={gravatar.url((userData as any).email, {s : '28px' , d : 'retro'})}
+                        alt={(userData as any).nickname}/>
             {showUserMenu && (
               <Menu style={{right:0, top:30}} show={showUserMenu} onCloseModal={onClickUserProfile}>
                 <ProfileModal>
-                  <img src={gravatar.url((data as any).email, {s : '36px' , d : 'retro'})}
-                       alt={(data as any).nickname}/>
+                  <img src={gravatar.url((userData as any).email, {s : '36px' , d : 'retro'})}
+                       alt={(userData as any).nickname}/>
                   <div>
-                    <span id="profile-name">{(data as any).nickname}</span>
+                    <span id="profile-name">{(userData as any).nickname}</span>
                     <span id="profile-active">Active</span>
                   </div>
                 </ProfileModal>
@@ -145,7 +152,7 @@ const Workspace : VFC = () => {
       <WorkspaceWrapper>
 
         <Workspaces>
-          {data?.Workspaces?.map((ws) => {
+          {userData?.Workspaces?.map((ws) => {
           return (
             <Link key={ws.id} to={`/workspace/${ws.url}/channel/일반`}>
               <WorkspaceButton>{ws.name.slice(0, 1).toUpperCase()}</WorkspaceButton>
@@ -156,7 +163,7 @@ const Workspace : VFC = () => {
         </Workspaces>
 
         <Channels>
-          <WorkspaceName onClick={toggleWorkspaceModal}>
+          <WorkspaceName onClick={toggleWorkspaceModal}>Sleact
           </WorkspaceName>
           <MenuScroll>
             <Menu show={showWorkspaceModal} onCloseModal={toggleWorkspaceModal} style={{top: 95, left: 80}}>
@@ -167,12 +174,15 @@ const Workspace : VFC = () => {
                 <button onClick={onLogout}>로그아웃</button>
               </WorkspaceModal>
             </Menu>
+            {channelData?.map((v) =>
+              <div>{v.name}</div>
+            )}
           </MenuScroll>
         </Channels>
         <Chats>
           <Switch>
-            <Route path="/workspace/channel" component={Channel} />
-            <Route path="/workspace/dm" component={DirectMessage} />
+            <Route path="/workspace/:workspace/channel/:channel" component={Channel} />
+            <Route path="/workspace/:workspace/dm/:id" component={DirectMessage} />
           </Switch>
         </Chats>
       </WorkspaceWrapper>
