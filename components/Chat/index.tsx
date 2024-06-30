@@ -3,6 +3,7 @@ import { ChatWrapper } from "@components/Chat/styles";
 import gravatar from "gravatar";
 import { IChat, IDM } from "@typings/db";
 import { useParams } from "react-router";
+import dayjs from "dayjs";
 
 interface Props {
   data: IDM | IChat;
@@ -24,7 +25,7 @@ const Chat : VFC<Props> = ({data} : Props) => {
       <div className="chat-text">
         <div className="chat-user">
           <b>{user?.nickname}</b>
-          <span>{data.createdAt}</span>
+          <span>{dayjs(data.createdAt).format("h:mm A")}</span>
         </div>
         <p>{data.content}</p>
       </div>
