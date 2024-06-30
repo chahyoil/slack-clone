@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Container } from "@pages/Channel/styles";
-import { Header } from "@pages/DirectMessage/styles";
+import { DragOver, Header } from "@pages/DirectMessage/styles";
 import gravatar from "gravatar";
 import useSWR from "swr";
 import fetcher from "@utils/fetcher";
@@ -56,7 +56,6 @@ const DirectMessage = () => {
             content: chat,
           })
           .then(() => {
-            mutate();
           })
           .catch(console.error);
       }
@@ -116,13 +115,14 @@ const DirectMessage = () => {
   const chatSections = makeSection(chatData ? chatData.flat().reverse() : []);
 
   return (
-    <Container>
+    <Container onDrop={onDrop} onDragOver={onDragOver}>
       <Header>
       <img src={gravatar.url(userData.email, {s: '24px', d: 'retro'})} alt={userData.nickname}></img>
         <span>{userData.nickname}</span>
       </Header>
       <ChatList chatSections={chatSections} ref={scrollbarRef} setSize={setSize} isReachingEnd={isReachingEnd} />
       <ChatBox chat={chat} onChangeChat={onChangeChat} onSubmitForm={onSubmitForm} />
+      {dragOver && <DragOver>업로드!</DragOver>}
     </Container>
   )
 }

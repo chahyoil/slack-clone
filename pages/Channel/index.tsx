@@ -1,6 +1,6 @@
 import React, { useCallback, useRef, useState } from "react";
 import Workspace from "@layouts/Workspace";
-import { Container, Header } from "@pages/Channel/styles";
+import { Container, DragOver, Header } from "@pages/Channel/styles";
 import useInput from "@hooks/useInput";
 import gravatar from "gravatar";
 import useSWR from "swr";
@@ -143,7 +143,7 @@ const Channel = () => {
   }
 
   return (
-    <Container>
+    <Container onDrop={onDrop} onDragOver={onDragOver}>
       <Header>
         <img src={gravatar.url(userData?.email, {s:'24px', d : 'retro'})} alt = {userData?.nickname} />
         <span>{userData?.nickname}</span>
@@ -156,6 +156,7 @@ const Channel = () => {
         setSize={setSize}
       />
       <ChatBox chat ={chat} onChangeChat={onChangeChat} onSubmitForm={onSubmitForm}/>
+      {dragOver && <DragOver>업로드!</DragOver>}
     </Container>
   )
 }
