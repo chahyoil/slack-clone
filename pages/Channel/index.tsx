@@ -132,7 +132,8 @@ const Channel = () => {
       socket?.off('message', onMessage);
     };
   }, [socket, onMessage]);
-
+  
+  // 안 읽은 메세지 개수 표시하기 위해서 workspacename-channelname-timestamp 조합을 저장
   useEffect(() => {
     localStorage.setItem(`${workspace}-${channel}`, new Date().getTime().toString());
   }, [workspace, channel]);

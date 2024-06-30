@@ -49,6 +49,7 @@ const DirectMessage = () => {
           });
           return prevChatData;
         }, false).then(() => {
+          localStorage.setItem(`${workspace}-${id}`, new Date().getTime().toString());
           setChat('');
           scrollbarRef.current?.scrollToBottom();
         });
@@ -102,6 +103,7 @@ const DirectMessage = () => {
     };
   }, [socket, onMessage]);
 
+  // 안 읽은 메세지 개수 표시하기 위해서 workspacename-id-timestamp 조합을 저장
   useEffect(() => {
     localStorage.setItem(`${workspace}-${id}`, new Date().getTime().toString());
   }, [workspace, id]);
@@ -139,6 +141,7 @@ const DirectMessage = () => {
       }
       axios.post(`/api/workspaces/${workspace}/dms/${id}/images`, formData).then(() => {
         setDragOver(false);
+        localStorage.setItem(`${workspace}-${id}`, new Date().getTime().toString());
         mutateChat();
       });
     },
