@@ -8,7 +8,7 @@ interface Configuration extends WebpackConfiguration {
 }
 
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
-// import {BundleAnalyzerPlugin} from 'webpack-bundle-analyzer';
+import {BundleAnalyzerPlugin} from 'webpack-bundle-analyzer';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -97,9 +97,11 @@ const config: Configuration = {
 if (isDevelopment && config.plugins) {
   config.plugins.push(new webpack.HotModuleReplacementPlugin());
   config.plugins.push(new ReactRefreshWebpackPlugin());
+  config.plugins.push(new BundleAnalyzerPlugin({analyzerMode: 'server', openAnalyzer: true}))
 }
 if (!isDevelopment && config.plugins) {
   config.plugins.push(new webpack.LoaderOptionsPlugin({minimize: true}))
+  config.plugins.push(new BundleAnalyzerPlugin({analyzerMode: 'static'}))
 }
 
 export default config;
