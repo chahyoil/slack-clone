@@ -1,5 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
-import Workspace from "@layouts/Workspace";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Container, DragOver, Header } from "@pages/Channel/styles";
 import useInput from "@hooks/useInput";
 import gravatar from "gravatar";
@@ -8,7 +7,6 @@ import { IChannel, IChat, IUser } from "@typings/db";
 import fetcher from "@utils/fetcher";
 import ChatList from "@components/ChatList";
 import ChatBox from "@components/ChatBox";
-import workspace from "@layouts/Workspace";
 import { useParams } from "react-router";
 import useSocket from "@hooks/useSocket";
 import useSWRInfinite from "swr/infinite";
@@ -16,12 +14,15 @@ import axios from "axios";
 import Scrollbars from "react-custom-scrollbars";
 import { Redirect } from "react-router-dom";
 import makeSection from "@utils/makeSection";
+import { toast } from "react-toastify";
+import InviteChannelModal from "@components/InviteChannelModal";
+
 
 const PAGE_SIZE = 20;
 const Channel = () => {
   const { workspace, channel } = useParams<{ workspace: string; channel: string }>();
   const [socket] = useSocket(workspace);
-  const { data: userData } = useSWR<IUser>('/api/users', fetcher);
+  const { data: myData } = useSWR<IUser>('/api/users', fetcher);
   const { data: channelsData } = useSWR<IChannel[]>(`/api/workspaces/${workspace}/channels`, fetcher);
   const channelData = channelsData?.find((v) => v.name === channel);
   const {
@@ -42,7 +43,7 @@ const Channel = () => {
     },
   );
   const { data: channelMembersData } = useSWR<IUser[]>(
-    userData ? `/api/workspaces/${workspace}/channels/${channel}/members` : null,
+    myData ? `/api/workspaces/${workspace}/channels/${channel}/members` : null,
     fetcher,
   );
   const [chat, onChangeChat, setChat] = useInput('');
@@ -60,14 +61,14 @@ const Channel = () => {
   const onSubmitForm = useCallback(
     (e) => {
       e.preventDefault();
-      if (chat?.trim() && chatData && channelData && userData) {
+      if (chat?.trim() && chatData && channelData && myData) {
         const savedChat = chat;
         mutateChat((prevChatData) => {
           prevChatData?.[0].unshift({
             id: (chatData[0][0]?.id || 0) + 1,
             content: savedChat,
-            UserId: userData.id,
-            User: userData,
+            UserId: myData.id,
+            User: myData,
             createdAt: new Date(),
             ChannelId: channelData.id,
             Channel: channelData,
@@ -88,8 +89,49 @@ const Channel = () => {
           .catch(console.error);
       }
     },
-    [chat, workspace, channel, channelData, userData, chatData, mutateChat, setChat],
+    [chat, workspace, channel, channelData, myData, chatData, mutateChat, setChat],
   );
+
+  const onMessage = useCallback(
+    (data: IChat) => {
+      if (
+        data.Channel.name === channel &&
+        (data.content.startsWith('uploads\\') || data.content.startsWith('uploads/') || data.UserId !== myData?.id)
+      ) {
+        mutateChat((chatData) => {
+          chatData?.[0].unshift(data);
+          return chatData;
+        }, false).then(() => {
+          if (scrollbarRef.current) {
+            if (
+              scrollbarRef.current.getScrollHeight() <
+              scrollbarRef.current.getClientHeight() + scrollbarRef.current.getScrollTop() + 150
+            ) {
+              console.log('scrollToBottom!', scrollbarRef.current?.getValues());
+              setTimeout(() => {
+                scrollbarRef.current?.scrollToBottom();
+              }, 100);
+            } else {
+              toast.success('새 메시지가 도착했습니다.', {
+                onClick() {
+                  scrollbarRef.current?.scrollToBottom();
+                },
+                closeOnClick: true,
+              });
+            }
+          }
+        });
+      }
+    },
+    [channel, myData, mutateChat],
+  );
+
+  useEffect(() => {
+    socket?.on('message', onMessage);
+    return () => {
+      socket?.off('message', onMessage);
+    };
+  }, [socket, onMessage]);
 
   const onClickInviteChannel = useCallback(() => {
     setShowInviteChannelModal(true);
@@ -138,15 +180,26 @@ const Channel = () => {
 
   const chatSections = makeSection(chatData ? ([] as IChat[]).concat(...chatData).reverse() : []);
 
-  if(!userData) {
+  if(!myData) {
     return null
   }
 
   return (
     <Container onDrop={onDrop} onDragOver={onDragOver}>
       <Header>
-        <img src={gravatar.url(userData?.email, {s:'24px', d : 'retro'})} alt = {userData?.nickname} />
-        <span>{userData?.nickname}</span>
+        <span>{channel}</span>
+        <div style={{ display: 'flex', flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
+          <span>{channelMembersData?.length}</span>
+          <button
+            onClick={onClickInviteChannel}
+            className="c-button-unstyled p-ia__view_header__button"
+            aria-label="Add people to #react-native"
+            data-sk="tooltip_parent"
+            type="button"
+          >
+            <i className="c-icon p-ia__view_header__button_icon c-icon--add-user" aria-hidden="true" />
+          </button>
+        </div>
       </Header>
       <ChatList
         scrollbarRef={scrollbarRef}
@@ -155,7 +208,12 @@ const Channel = () => {
         chatSections={chatSections}
         setSize={setSize}
       />
-      <ChatBox chat ={chat} onChangeChat={onChangeChat} onSubmitForm={onSubmitForm}/>
+      <InviteChannelModal
+        show={showInviteChannelModal}
+        onCloseModal={onCloseModal}
+        setShowInviteChannelModal={setShowInviteChannelModal}
+      />
+      <ChatBox chat={chat} onChangeChat={onChangeChat} onSubmitForm={onSubmitForm} />
       {dragOver && <DragOver>업로드!</DragOver>}
     </Container>
   )
