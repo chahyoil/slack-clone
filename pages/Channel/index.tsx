@@ -8,15 +8,20 @@ import { IUser } from "@typings/db";
 import fetcher from "@utils/fetcher";
 import ChatList from "@components/ChatList";
 import ChatBox from "@components/ChatBox";
+import workspace from "@layouts/Workspace";
+import { useParams } from "react-router";
 
 const Channel = () => {
+  const { workspace, channel } = useParams<{ workspace: string; channel: string }>();
   const [chat, onChangeChat] = useInput('');
   const { data: userData, error, mutate } = useSWR<IUser | false>('/api/users', fetcher, {
     dedupingInterval: 2000, // 2초
   });
   const onSubmitForm = useCallback((e) => {
     e.preventDefault();
-
+    if(chat?.trim()) {
+      // axios.post(`/api/workspaces/${workspace}/dms/${id}/chats`)
+    }
   }, []);
 
   if(!userData) {

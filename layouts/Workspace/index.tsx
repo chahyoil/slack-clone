@@ -27,6 +27,7 @@ import InviteWorkspaceModal from "@components/InviteWorkspaceModal";
 import InviteChannelModal from "@components/InviteChannelModal";
 import DMList from "@components/DMList";
 import ChannelList from "@components/ChannelList";
+import useSocket from '@hooks/useSocket';
 
 const Channel = loadable(() => import('@pages/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage'));
@@ -41,7 +42,10 @@ const Workspace : VFC = () => {
   const [newWorkspace, onChangeNewWorkspace, setNewWorkpsace] = useInput('');
   const [newUrl, onChangeNewUrl, setNewUrl] = useInput('');
 
+
   const { workspace, channel } = useParams<{ workspace: string; channel: string }>();
+  const [socket, disconnect] = useSocket(workspace);
+
   const { data : userData, mutate, error } = useSWR<IUser | false>('/api/users', fetcher, {
     dedupingInterval: 1000 * 600,
   });
@@ -51,6 +55,17 @@ const Workspace : VFC = () => {
     fetcher
   );
 
+  useEffect(() => {
+    if (channelData && userData && socket) {
+      console.log(socket);
+      socket.emit('login', { id: userData.id, channels: channelData.map((v) => v.id) });
+    }
+  }, [socket, channelData, userData]);
+  useEffect(() => {
+    return () => {
+      disconnect();
+    };
+  }, [workspace, disconnect]);
 
   // const { data, error, mutate } = useSWR('/api/users#123', fetcher, {    /// 요청은 같게 보내면서 동작을 다르게 하고 싶을 때
   //   dedupingInterval: 1000 * 60,
